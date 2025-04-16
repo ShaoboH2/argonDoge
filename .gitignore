@@ -1,0 +1,5 @@
+src/libdogecoin_wallet.a
+src/*.a
+src/dogecoind
+src/bench/bench_dogecoin
+src/test/test_dogecoin

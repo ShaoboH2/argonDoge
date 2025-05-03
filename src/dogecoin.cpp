@@ -4,6 +4,7 @@
 
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/mersenne_twister.hpp>
+#include <cmath>
 
 #include "policy/policy.h"
 #include "arith_uint256.h"
@@ -47,14 +48,57 @@ unsigned int CalculateDogecoinNextWorkRequired(const CBlockIndex* pindexLast, in
     int64_t nMaxTimespan;
     int64_t nMinTimespan;
 
-    if (params.fDigishieldDifficultyCalculation) //DigiShield implementation - thanks to RealSolid & WDC for this code
-    {
+    // Select difficulty adjustment algorithm based on consensus flags
+    if (params.fLWMADifficultyCalculation) {
+        // Linearly Weighted Moving Average (LWMA) algorithm
+        double targetRatio = (double)retargetTimespan / (double)nActualTimespan;
+
+        // Apply a linear weighting factor
+        // This dampens the adjustment for small deviations but allows stronger response to large ones
+        double adjustmentFactor = 0.0;
+        if (targetRatio > 1.0) {
+            // Need to decrease difficulty (blocks too slow)
+            adjustmentFactor = 1.0 + ((targetRatio - 1.0) * 0.8);
+        } else {
+            // Need to increase difficulty (blocks too fast)
+            adjustmentFactor = 1.0 - ((1.0 - targetRatio) * 0.6);
+        }
+
+        nModulatedTimespan = retargetTimespan / adjustmentFactor;
+
+        // Set bounds for LWMA
+        nMinTimespan = retargetTimespan / 2;     // 30 seconds minimum
+        nMaxTimespan = retargetTimespan * 1.5;   // 90 seconds maximum
+    }
+    else if (params.fAdaptiveDifficultyCalculation) {
+        // Adaptive difficulty algorithm
+        double deviation = (double)nActualTimespan / (double)retargetTimespan;
+
+        // Apply a sigmoid-like function to dampen extreme values while being responsive to moderate changes
+        if (deviation > 1.0) {
+            // Slower blocks than expected (higher difficulty needed)
+            deviation = 1.0 + log(deviation) / 2.0;
+        } else if (deviation < 1.0 && deviation > 0.0) {
+            // Faster blocks than expected (lower difficulty needed)
+            deviation = 1.0 - log(1.0 / deviation) / 2.0;
+        }
+
+        // Convert back to timespan
+        nModulatedTimespan = retargetTimespan * deviation;
+
+        // Set bounds for the adaptive algorithm
+        nMinTimespan = retargetTimespan / 2;     // 30 seconds minimum
+        nMaxTimespan = retargetTimespan * 2;     // 120 seconds maximum
+    }
+    else if (params.fDigishieldDifficultyCalculation) {
+        // Original DigiShield algorithm
         // amplitude filter - thanks to daft27 for this code
         nModulatedTimespan = retargetTimespan + (nModulatedTimespan - retargetTimespan) / 8;
 
         nMinTimespan = retargetTimespan - (retargetTimespan / 4);
         nMaxTimespan = retargetTimespan + (retargetTimespan / 2);
-    } else if (nHeight > 10000) {
+    }
+    else if (nHeight > 10000) {
         nMinTimespan = retargetTimespan / 4;
         nMaxTimespan = retargetTimespan * 4;
     } else if (nHeight > 5000) {

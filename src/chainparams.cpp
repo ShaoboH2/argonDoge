@@ -378,6 +378,8 @@ class CRegTestParams : public CChainParams {
 private:
     Consensus::Params digishieldConsensus;
     Consensus::Params auxpowConsensus;
+    Consensus::Params adaptiveDifficultyConsensus;
+    Consensus::Params lwmaConsensus;
 public:
     CRegTestParams() {
         strNetworkID = "regtest";
@@ -394,7 +396,7 @@ public:
         consensus.nPowTargetSpacing = 1; // regtest: 1 second blocks
         consensus.fDigishieldDifficultyCalculation = false;
         consensus.fPowAllowMinDifficultyBlocks = true;
-        consensus.fPowNoRetargeting = true;
+        consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 540; // 75% for testchains
         consensus.nMinerConfirmationWindow = 720; // Faster than normal for regtest (2,520 instead of 10,080)
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -423,17 +425,38 @@ public:
         consensus.nCoinbaseMaturity = 60; // For easier testability in RPC tests
 
         digishieldConsensus = consensus;
-        digishieldConsensus.nHeightEffective = 10;
-        digishieldConsensus.nPowTargetTimespan = 1; // regtest: also retarget every second in digishield mode, for conformity
+        digishieldConsensus.nHeightEffective = 200;
+        digishieldConsensus.nPowTargetTimespan = 60; // 60 seconds for all algorithms
         digishieldConsensus.fDigishieldDifficultyCalculation = true;
+        digishieldConsensus.fAdaptiveDifficultyCalculation = false;
+        digishieldConsensus.fLWMADifficultyCalculation = false;
 
         auxpowConsensus = digishieldConsensus;
         auxpowConsensus.fAllowLegacyBlocks = false;
-        auxpowConsensus.nHeightEffective = 20;
+        auxpowConsensus.nHeightEffective = 400;
+
+        // Create a consensus parameter set for an adaptive difficulty adjustment algorithm
+        Consensus::Params adaptiveDifficultyConsensus = auxpowConsensus;
+        adaptiveDifficultyConsensus.nHeightEffective = 600;
+        // This algorithm uses a special timespan value that will be detected in the calculation function
+        adaptiveDifficultyConsensus.nPowTargetTimespan = 60; // 60 seconds for all algorithms
+        adaptiveDifficultyConsensus.fDigishieldDifficultyCalculation = false;
+        adaptiveDifficultyConsensus.fAdaptiveDifficultyCalculation = true;
+        adaptiveDifficultyConsensus.fLWMADifficultyCalculation = false;
+
+        // Create a consensus parameter set for LWMA algorithm
+        Consensus::Params lwmaConsensus = adaptiveDifficultyConsensus;
+        lwmaConsensus.nHeightEffective = 800;
+        lwmaConsensus.nPowTargetTimespan = 60; // 60 seconds for all algorithms
+        lwmaConsensus.fDigishieldDifficultyCalculation = false;
+        lwmaConsensus.fAdaptiveDifficultyCalculation = false;
+        lwmaConsensus.fLWMADifficultyCalculation = true;
 
         // Assemble the binary search tree of parameters
         digishieldConsensus.pLeft = &consensus;
         digishieldConsensus.pRight = &auxpowConsensus;
+        auxpowConsensus.pRight = &adaptiveDifficultyConsensus;
+        adaptiveDifficultyConsensus.pRight = &lwmaConsensus;
         pConsensusRoot = &digishieldConsensus;
 
         pchMessageStart[0] = 0xfa;

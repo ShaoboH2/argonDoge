@@ -5,7 +5,7 @@
 Implemented by: **Hao Lin** (haolin5)
 
 * **Implemented 2 advanced difficulty adjustment algorithms**  
-    - DigiShield v3 suffers from slow responsiveness to hashrate fluctuations. To address this, I used an **adaptive difficulty algorithm**. On top of that, I further improve responsiveness and smoothness by using **LWMA (Linearly Weighted Moving Average)** as a better solution.
+    - Dogecoin’s original DigiShield v3 suffers from slow responsiveness to hashrate fluctuations. To address this, I used an **adaptive difficulty algorithm**. On top of that, I further improve responsiveness and smoothness by using **LWMA (Linearly Weighted Moving Average)** as a better solution.
 
 * **Conducted controlled experiment for the new algorithms**  
     - The experiment is conducted in the `regtest` environment with a `Target_Pow_Timespan = 10 seconds`. The experiment emulates sudden increases and decreases in hashrate by varying the delay between block generations.
@@ -13,9 +13,9 @@ Implemented by: **Hao Lin** (haolin5)
 * **Experiment Procedure**  
     - For each block, record the block height, on-chain timestamp, and difficulty.  
     - Repeat for a total of 40 blocks under the above mining delay pattern.  
-Difficulty changes are measured and plotted to observe how each algorithm reacts to hashrate dynamics.
+    - Difficulty changes are measured and plotted to observe how each algorithm reacts to hashrate dynamics.
 
-* **Delivery and Output**  
+* **Deliveries and Output**  
     - Main algorithm implementation at [src/dogecoin.cpp](./src/dogecoin.cpp).
     - Experiment scripts and output at [difficulty-bench](./difficulty-bench/).  
 

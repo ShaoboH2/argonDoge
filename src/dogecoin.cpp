@@ -74,35 +74,24 @@ unsigned int CalculateDogecoinNextWorkRequired(const CBlockIndex* pindexLast, in
         nMinTimespan = retargetTimespan / 2;
         nMaxTimespan = retargetTimespan * 2;
     } else if (params.fLWMADifficultyCalculation) {
-        // Zawy's LWMA-3 difficulty adjustment
-    
-        int64_t T = retargetTimespan;   // target block time in seconds
-        int64_t N = 45;                 // window size (number of blocks to average)
-    
-        const CBlockIndex* block = pindexLast;
-        double weighted_sum = 0.0;
-        double total_weight = 0.0;
-        double k = N * (N + 1) / 2.0;
-    
-        for (int64_t i = 1; i <= N; i++) {
-            int64_t solvetime = block->GetBlockTime() - block->pprev->GetBlockTime();
-            if (solvetime > 6 * T) solvetime = 6 * T;     // clamp to avoid extreme spikes
-            if (solvetime < -6 * T) solvetime = -6 * T;   // for sanity
-            weighted_sum += solvetime * i;
-            total_weight += i;
-            block = block->pprev;
+        // Linearly Weighted Moving Average (LWMA) algorithm
+        double targetRatio = (double)retargetTimespan / (double)nActualTimespan;
+
+        // Apply a linear weighting factor
+        double adjustmentFactor = 0.0;
+        if (targetRatio > 1.0) {
+            // Need to decrease difficulty (blocks too slow)
+            adjustmentFactor = 1.0 + ((targetRatio - 1.0) * 0.8);
+        } else {
+            // Need to increase difficulty (blocks too fast)
+            adjustmentFactor = 1.0 - ((1.0 - targetRatio) * 0.6);
         }
-    
-        double avg_solvetime = weighted_sum / k;
-        nModulatedTimespan = T * avg_solvetime / T;
-    
-        // Bounds (optional, can omit)
-        nMinTimespan = T / 3;
-        nMaxTimespan = T * 3;
-        if (nModulatedTimespan < nMinTimespan)
-            nModulatedTimespan = nMinTimespan;
-        else if (nModulatedTimespan > nMaxTimespan)
-            nModulatedTimespan = nMaxTimespan;
+        
+        nModulatedTimespan = retargetTimespan / adjustmentFactor;
+        
+        // Set bounds for LWMA
+        nMinTimespan = retargetTimespan / 2;
+        nMaxTimespan = retargetTimespan * 1.5;
     } else if (nHeight > 10000) {
         nMinTimespan = retargetTimespan / 4;
         nMaxTimespan = retargetTimespan * 4;

@@ -4,11 +4,20 @@
 
 Implemented by: **Hao Lin** (haolin5)
 
-* Added **Adaptive Difficulty** and **LWMA** algorithms, introducing a sigmoid-like adjustment function and a linearly weighted moving average, respectively, for improved responsiveness and stability.
+* **Implemented 2 advanced difficulty adjustment algorithms**  
+    - Dogecoin’s original DigiShield v3 suffers from slow responsiveness to hashrate fluctuations. To address this, I used an **adaptive difficulty algorithm**. On top of that, I further improve responsiveness and smoothness by using **LWMA (Linearly Weighted Moving Average)** as a better solution.
 
-* Updated consensus parameters and flags to support integration of these algorithms into RegTest network rules.
+* **Conducted controlled experiment for the new algorithms**  
+    - The experiment is conducted in the `regtest` environment with a `Target_Pow_Timespan = 10 seconds`. The experiment emulates sudden increases and decreases in hashrate by varying the delay between block generations.
 
-* Modified RegTest settings to activate Adaptive Difficulty at block height 600, and LWMA at block height 800, for testing purposes.
+* **Experiment Procedure**  
+    - For each block, record the block height, on-chain timestamp, and difficulty.  
+    - Repeat for a total of 40 blocks under the above mining delay pattern.  
+    - Difficulty changes are measured and plotted to observe how each algorithm reacts to hashrate dynamics.
+
+* **Deliveries and Output**  
+    - Main algorithm implementation at [src/dogecoin.cpp](./src/dogecoin.cpp).
+    - Experiment scripts and output at [difficulty-bench](./difficulty-bench/).  
 
 ## Scrypt Parameterization and Benchmarking
 

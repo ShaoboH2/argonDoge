@@ -32,3 +32,30 @@ Implemented by: **Shuban Kagini** (skagini2)
     - CPU time
     - Memory usage
 
+## Argon2d Proof‑of‑Work Integration & Benchmarking  
+Implemented by: **Shaobo Hu** (shaoboh2)
+
+### 1 · Why Argon2d?
+* Scrypt is CPU‑bound and ASIC‑friendly once parameters are known.  
+* **Argon2d**, designed for password hashing, is deliberately **memory‑hard** and tunable
+
+### 2 · Code‑base changes
+| File | Key edits |
+|------|-----------|
+| `src/hash.cpp` | Added `HashArgon2d()` wrapper (calls `argon2d_hash_raw`). |
+| `src/primitives/pureheader.cpp` | Re‑routed `CPureBlockHeader::GetPoWHash()` to **Argon2d** instead of Scrypt. |
+
+### 3 · Standalone Argon2d benchmark harness
+Path: `argon-bench/`
+
+* **`argon_bench.cpp`**  
+Usage: ./argon_bench <M> <C>
+  M – memory‑cost exponent (2^M KiB).
+      Example: M = 16 ⇒ 65 536 KiB = 64 MiB.
+  C – time‑cost / number of passes.
+* **`runner.cpp`**
+Usage: ./runner
+  ‑ Forks `argon_bench` over a grid of **M ∈ {6,7,8,9,10}** and **C ∈ {1,2,3,4}**,  
+  captures wall‑time, user+sys CPU seconds and peak RSS via `wait4()`, writes
+  a tidy **`results.csv`**.
+

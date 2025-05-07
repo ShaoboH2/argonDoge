@@ -45,7 +45,7 @@ Implemented by: **Shaobo Hu** (shaoboh2)
 | `src/hash.cpp` | Added `HashArgon2d()` wrapper (calls `argon2d_hash_raw`). |
 | `src/primitives/pureheader.cpp` | Re‑routed `CPureBlockHeader::GetPoWHash()` to **Argon2d** instead of Scrypt. |
 
-### 3 · Standalone Argon2d benchmark harness
+### 3 · Standalone Argon2d benchmark
 Path: `argon-bench/`
 
 * **`argon_bench.cpp`**  
